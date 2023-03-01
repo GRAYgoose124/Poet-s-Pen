@@ -1,4 +1,6 @@
 .venv/
 *.lock
-__pycache__/
+**/__pycache__/
 .vscode/
+*.log
+**/tmp/
