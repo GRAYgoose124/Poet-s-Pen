@@ -1,2 +1,0 @@
-PROJECT_NAME = $1
-poetry new $PROJECT_NAME

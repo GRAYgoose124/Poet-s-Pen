@@ -34,7 +34,7 @@ def main():
 
     pc = ProjectCreator()
 
-    root_path = Path(args.root_path) / "demo"
+    root_path = Path(args.root_path)
 
     match args.command:
         case "new":
