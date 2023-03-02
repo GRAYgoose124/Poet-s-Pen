@@ -91,7 +91,6 @@ class ProjectCreator:
 
                 if label in templates and file_name not in copied:                    
                     if file.parent.name == "tests":
-                        print(file)
                         logger.debug(f"Saving test file...")
                         new_path = self._poetry.file.parent / "tests" / file_name
                     if file.parent.name == "package":
@@ -108,10 +107,12 @@ class ProjectCreator:
 
         logger.info(f"Copied template files: {', '.join(copied)}")
 
-    def add_item(self, key: str, value: str):
+    def add_item(self, item):
         """ Add an item to the pyproject.toml file."""
-        pyproject_file = self._poetry.file.parent / "pyproject.toml"
-        pyproject_toml = tomlkit.parse(self._poetry.file.read_text())
+        key, value = item.popitem()
+
+        pyproject = self._poetry.file
+        pyproject_toml = pyproject.read()
 
         logger.debug(f"Updating pyproject.toml... {key} = {value}")
         for k, v in value.items():
@@ -121,7 +122,7 @@ class ProjectCreator:
                 pyproject_toml[key][k] = v
 
         logger.debug(f"Writing pyproject.toml...")
-        pyproject_file.write_text(tomlkit.dumps(pyproject_toml))
+        pyproject.write(pyproject_toml)
 
     @staticmethod
     def new(root_path: Path, project_name: str, recreate: bool = False) -> 'ProjectCreator':
@@ -133,13 +134,21 @@ class ProjectCreator:
         project._add_template_files()
 
         # Add default entrypoint to pyproject.toml # TODO: Use the poetry API for this
-        project.add_item("tool", {"poetry": {"scripts": {project_name: f"{project_name}:main"}}})
+        project.add_item({"tool": {"poetry": {"scripts": {project_name: f"{project_name}:main"}}}})
 
 
         return project
 
-    def run(self):
-        results = run(["poetry", "run"], cwd=self._poetry.file.parent)
+    def poetry_command(self, command: str, *args, managed=True):
+        """Run a poetry command."""
+        # TODO: Use the poetry API.
+
+        if managed:
+            # The run command defaults to the created entrypoint.
+            if command == "run":
+                args = [self._poetry.package.name, *args]
+
+        results = run(["poetry", command, *args], cwd=self._poetry.file.parent)
 
     def install(self, update: bool = False) -> None:
         if update:
